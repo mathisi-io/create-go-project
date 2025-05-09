@@ -364,18 +364,12 @@ func Greet(name string) string {
 	} else {
 		fmt.Println("🧹 go mod tidy run inside", service)
 	}
-	// Update go.work file
-	goWorkPath := filepath.Join(project, "go.work")
-	if !fileContainsText(goWorkPath, fmt.Sprintf("./services/%s", service)) {
-		goWorkContent := fmt.Sprintf(`
-use (
-	./services/%s
-)
-`, service)
-		appendContent(goWorkPath, goWorkContent)
+
+	// aupdate go.work with the service name
+	if err := runCmd(project, "go", "work", "use", fmt.Sprintf("./services/%s", service)); err != nil {
+		log.Printf("⚠️ Failed to run go work use ./services/%s", service)
 	}
 
-	// Update Makefile
 	makefilePath := filepath.Join(project, "Makefile")
 	if !fileContainsText(makefilePath, fmt.Sprintf("run-%s-api", service)) {
 		makefileContent := fmt.Sprintf(`run-%s-api:
