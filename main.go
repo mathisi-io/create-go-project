@@ -1,3 +1,4 @@
+// Package create-go-project is used for scafolding a microservice project
 package main
 
 import (
