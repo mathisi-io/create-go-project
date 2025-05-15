@@ -253,7 +253,7 @@ func createService(project, service string) {
 		fmt.Sprintf("services/%s/cmd/cli", service),
 		fmt.Sprintf("services/%s/config", service),
 		fmt.Sprintf("services/%s/db", service),
-		fmt.Sprintf("services/%s/internal", service),
+		fmt.Sprintf("services/%s/internal/service", service),
 	}
 	// Create directories
 	for _, dir := range baseDirs {
@@ -309,32 +309,44 @@ func main() {
 import (
 	"fmt"
 	"net/http"
+	"%s/%s/internal/service"
 )
 
 func HelloHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "👋 Hello from the %s API!")
+	greeting := "👋 Hello from the %s API"
+	if name := r.URL.Query().Get("name"); name != "" {
+		greeting = service.Greet(name)
+	}
+
+	fmt.Fprintln(w, greeting + "!")
 }
-`, service))
+`, project, service, service))
 
 	writeFile(filepath.Join(project, "services", service, "cli"), "root.go", fmt.Sprintf(`package cli
 
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"%s/%s/internal/service"
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "cli",
 	Short: "CLI entry point",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("👋 Hello from the %s CLI!")
+		greeting := "👋 Hello from the %s CLI"
+		if len(args) > 0 {
+			greeting = service.Greet(args[0])
+		}
+
+		fmt.Println(greeting + "!")
 	},
 }
 
 func Execute() {
 	cobra.CheckErr(rootCmd.Execute())
 }
-`, service))
+`, project, service, service))
 
 	writeFile(filepath.Join(project, "services", service, "config"), "config.yaml", fmt.Sprintf(`server:
   port: %d
@@ -347,10 +359,10 @@ CREATE TABLE example (
 );
 `)
 
-	writeFile(filepath.Join(project, "services", service, "internal"), "service.go", `package internal
+	writeFile(filepath.Join(project, "services", service, "internal", "service"), "service.go", `package service
 
 func Greet(name string) string {
-	return "Hello, " + name + "!"
+	return "👋 Hello " + name
 }
 `)
 
